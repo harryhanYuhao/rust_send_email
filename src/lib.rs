@@ -1,4 +1,36 @@
 //! Simple rust email sender.
+//! Example: 
+//! ```rust
+//! let sender = Sender::new(
+//!     "example@gmail.com", // credential_username
+//!     ".password.toml",    // file_path to password
+//!     "Eric Elon",         // sender name. Leave empty if not needed
+//!     SmtpServer::Gmail,   // provider
+//!     "example@gmail.com", // reply_addr
+//! );
+//! 
+//! let message = EmailContent::new(
+//!     "Hi",                           // subject
+//!     "Hello, this is a test email.", // body
+//!     false,                          // is_html
+//!     vec!["pic.jpg", "Cargo.toml"],  // path to attachments
+//! );
+//! 
+//! let recipients = vec![
+//!     Recipient::new(
+//!         "Esther Frank",      // name
+//!         "example@gmail.com", // email
+//!         Category::To,        // category. can be To, Cc, or Bcc
+//!     ),
+//!     Recipient::new(
+//!         "", // name leave empty if not needed
+//!         "example@outlook.com",
+//!         Category::Cc, // Category.
+//!     ),
+//! ];
+//! 
+//! send_email(&sender, &message, &recipients).unwrap();
+//! ```
 
 #![warn(missing_docs)]
 use lettre::message::header::ContentType;
@@ -12,41 +44,12 @@ mod email;
 pub use sender::SmtpServer;
 pub use sender::Sender;
 pub use recipient::{Recipient, Category};
-pub use email::Email;
+pub use email::EmailContent;
 
-/// To send email, we need three things: 
-/// sender information, receiver information, and email content,
-/// which are represented by [`Sender`], [`Recipient`], and [`Email`] respectively.
-/// Example: 
-/// ```rust
-///let sender_info = SenderInfo::new(
-///    "example@gmail.com",           // credential_username (email address)
-///    "PASSWORD",              // password
-///    "John Eric",             // sender_name
-///    SmtpServer::Gmail,       // smtp provider
-///);
-///
-///let message = EmailInfo::new(
-///    "Hi",                           // subject
-///    "Hello, this is a test email.", // body
-///    false,                          // is_html
-///    vec!["pic.jpg", "Cargo.toml"],  // path to attachments; leave empty if no attachment
-///);
-///
-///let recipients = vec![RecipientInfo::new(
-///    "John Staff",                // name
-///    "y.han@joblist.org.uk", // email
-///)];
-///
-///send_email(&sender_info, &message, &recipients).unwrap();
-/// ```
-/// You can send to more recipients by adding more [`Recipient`] to the vector. You can avoid
-/// sending attachments by leaving the attachemnt vector empty.
-///
-/// To furthur modify the email content, see more constructors for [`Email`].
+/// Send email, providing the sender, email content, and recipients.
 pub fn send_email(
     sender: &Sender,
-    email_info: &Email,
+    content: &EmailContent,
     recipient: &[Recipient],
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Create Sender info
@@ -56,7 +59,7 @@ pub fn send_email(
     let smtp_server = sender.get_smtp_server();
 
     // Content type
-    let content_type = match email_info.is_html {
+    let content_type = match content.is_html {
         true => ContentType::TEXT_HTML,
         false => ContentType::TEXT_PLAIN,
     };
@@ -65,9 +68,9 @@ pub fn send_email(
     let mut multipart = MultiPart::mixed().singlepart(
         lettre::message::SinglePart::builder()
             .header(content_type)
-            .body(String::from(email_info.content.to_owned())),
+            .body(String::from(content.content.to_owned())),
     );
-    for i in email_info.attachments.iter() {
+    for i in content.attachments.iter() {
         multipart = multipart.singlepart(i.clone());
     }
 
@@ -84,7 +87,7 @@ pub fn send_email(
     let email = email
         .from(send_mailbox)
         .reply_to(reply_addr.into())
-        .subject(email_info.subject.to_owned())
+        .subject(content.subject.to_owned())
         .multipart(multipart)
         .unwrap();
 

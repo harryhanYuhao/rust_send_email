@@ -5,7 +5,7 @@ use std::fs;
 /// Represents the email content.
 /// You should create an email object by using its constructors.
 #[allow(missing_docs)]
-pub struct Email {
+pub struct EmailContent {
     pub subject: String,
     pub content: String,
     pub is_html: bool,
@@ -22,7 +22,7 @@ fn convert_path_to_attachment(path: &str) -> SinglePart {
     Attachment::new(filename).body(filebody, content_type_att)
 }
 
-impl Email {
+impl EmailContent {
     /// Shortcut for creating a plain text email.
     pub fn plain_messasge(subject: &str, content: &str) -> Self {
         Self {
