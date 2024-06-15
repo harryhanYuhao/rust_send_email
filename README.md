@@ -11,9 +11,9 @@ fn main() {
     let sender_info = SenderInfo::new(
         "example@gmail.com",           // credential_username (email address)
         "PASSWORD",              // password
-        "Harry Han",             // sender_name
+        "Elon Scott",             // sender_name
         SmtpServer::Gmail,       // smtp provider
-        "harryhan912@gmail.com", // reply_addr
+        "example@gmail.com", // reply_addr
 
     );
 
@@ -25,8 +25,8 @@ fn main() {
     );
 
     let recipients = vec![RecipientInfo::new(
-        "Harry",                // name
-        "y.han@joblist.org.uk", // email
+        "Mike",                // name
+        "example@gmail.com", // email
         Category::To,           // category can be To, Cc, Bcc
     )];
 
