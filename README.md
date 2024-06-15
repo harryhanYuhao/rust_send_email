@@ -13,6 +13,8 @@ fn main() {
         "PASSWORD",              // password
         "Harry Han",             // sender_name
         SmtpServer::Gmail,       // smtp provider
+        "harryhan912@gmail.com", // reply_addr
+
     );
 
     let message = EmailInfo::new(
@@ -25,6 +27,7 @@ fn main() {
     let recipients = vec![RecipientInfo::new(
         "Harry",                // name
         "y.han@joblist.org.uk", // email
+        Category::To,           // category
     )];
 
     send_email(&sender_info, &message, &recipients).unwrap();

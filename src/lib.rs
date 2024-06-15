@@ -1,180 +1,59 @@
-// cargo add lettre
-use lettre::address::Address;
+//! Simple rust email sender.
+
+#![warn(missing_docs)]
 use lettre::message::header::ContentType;
-use lettre::message::{Attachment, Mailbox, SinglePart};
-use lettre::transport::smtp::authentication::Credentials;
+use lettre::message::{Mailbox, MultiPart};
 use lettre::{Message, SmtpTransport, Transport};
 
-use serde::Deserialize;
-use std::fs;
+mod sender;
+mod recipient;
+mod email;
 
-// smtp is send server
-pub enum SmtpServer {
-    Gmail,
-    FastMail,
-    Custom(String),
-}
+pub use sender::SmtpServer;
+pub use sender::Sender;
+pub use recipient::{Recipient, Category};
+pub use email::Email;
 
-pub struct EmailInfo {
-    subject: String,
-    content: String,
-    is_html: bool,
-    attachments: Vec<SinglePart>,
-}
-
-pub struct RecipientInfo {
-    name: Option<String>,
-    email: String,
-}
-
-impl RecipientInfo {
-    pub fn new(name: &str, email: &str) -> Self {
-        Self {
-            name: Some(name.to_owned()),
-            email: email.to_owned(),
-        }
-    }
-
-    pub fn address(email: &str) -> Self {
-        Self {
-            name: None,
-            email: email.to_owned(),
-        }
-    }
-}
-
-fn convert_path_to_attachment(path: &str) -> SinglePart {
-    let filename = path.to_string();
-    let filebody = fs::read(path).expect(&format!(
-        "Failed to Execute path_to_attachment:\nUnable to read file: {}",
-        path
-    ));
-    let content_type_att = ContentType::TEXT_PLAIN;
-    Attachment::new(filename).body(filebody, content_type_att)
-}
-
-impl EmailInfo {
-    pub fn plain_messasge(subject: &str, content: &str) -> Self {
-        Self {
-            subject: subject.to_owned(),
-            content: content.to_owned(),
-            is_html: false,
-            attachments: Vec::new(),
-        }
-    }
-
-    pub fn new(subject: &str, content: &str, is_html: bool, attachments: Vec<&str>) -> Self {
-        let attachments = attachments
-            .iter()
-            .map(|x| convert_path_to_attachment(x))
-            .collect::<Vec<SinglePart>>();
-        Self {
-            subject: subject.to_owned(),
-            content: content.to_owned(),
-            is_html,
-            attachments,
-        }
-    }
-
-    pub fn new_body_from_file(
-        subject: &str,
-        file_path: &str,
-        is_html: bool,
-        attachments: Vec<&str>,
-    ) -> Self {
-        let attachments = attachments
-            .iter()
-            .map(|x| convert_path_to_attachment(x))
-            .collect::<Vec<SinglePart>>();
-
-        let content = fs::read_to_string(file_path).expect(&format!(
-            "Failed to Execute new_body_from_file:\nUnable to read file: {}",
-            file_path
-        ));
-
-        Self {
-            subject: subject.to_owned(),
-            content,
-            is_html,
-            attachments,
-        }
-    }
-}
-
-#[derive(Deserialize)]
-struct Password {
-    password: String,
-}
-
-pub struct SenderInfo {
-    credential_username: String,
-    credential_password: String,
-    sender_addr: String,
-    sender_name: String,
-    reply_addr: String,
-    provider: SmtpServer,
-}
-
-impl SenderInfo {
-    pub fn new(
-        credential_username: &str,
-        credential_password: &str,
-        sender_name: &str,
-        provider: SmtpServer,
-    ) -> Self {
-        Self {
-            credential_username: credential_username.to_owned(),
-            credential_password: credential_password.to_owned(),
-            sender_addr: credential_username.to_owned(),
-            sender_name: sender_name.to_owned(),
-            reply_addr: credential_username.to_owned(),
-            provider,
-        }
-    }
-
-    pub fn new_passwd_from_file(
-        credential_username: &str,
-        file_path: &str,
-        sender_name: &str,
-        provider: SmtpServer,
-    ) -> Self {
-        let file = fs::read_to_string(file_path).expect(&format!(
-            "Failed to Execute new_passwd_from_file:\nUnable to read file: {}",
-            file_path
-        ));
-        let password: Password = toml::from_str(&file).unwrap();
-        let password = password.password;
-        Self {
-            credential_username: credential_username.to_owned(),
-            credential_password: password,
-            sender_addr: credential_username.to_owned(),
-            sender_name: sender_name.to_owned(),
-            reply_addr: credential_username.to_owned(),
-            provider,
-        }
-    }
-}
-
+/// To send email, we need three things: 
+/// sender information, receiver information, and email content,
+/// which are represented by [`Sender`], [`Recipient`], and [`Email`] respectively.
+/// Example: 
+/// ```rust
+///let sender_info = SenderInfo::new(
+///    "example@gmail.com",           // credential_username (email address)
+///    "PASSWORD",              // password
+///    "Harry Han",             // sender_name
+///    SmtpServer::Gmail,       // smtp provider
+///);
+///
+///let message = EmailInfo::new(
+///    "Hi",                           // subject
+///    "Hello, this is a test email.", // body
+///    false,                          // is_html
+///    vec!["pic.jpg", "Cargo.toml"],  // path to attachments; leave empty if no attachment
+///);
+///
+///let recipients = vec![RecipientInfo::new(
+///    "Harry",                // name
+///    "y.han@joblist.org.uk", // email
+///)];
+///
+///send_email(&sender_info, &message, &recipients).unwrap();
+/// ```
+/// You can send to more recipients by adding more [`Recipient`] to the vector. You can avoid
+/// sending attachments by leaving the attachemnt vector empty.
+///
+/// To furthur modify the email content, see more constructors for [`Email`].
 pub fn send_email(
-    sender_info: &SenderInfo,
-    email_info: &EmailInfo,
-    recipient: &[RecipientInfo],
+    sender: &Sender,
+    email_info: &Email,
+    recipient: &[Recipient],
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Create Sender info
-    let creds = Credentials::new(
-        sender_info.credential_username.to_owned(),
-        sender_info.credential_password.to_owned(),
-    );
-    let source_address = sender_info.sender_addr.parse::<Address>()?;
-    let name: Option<String> = Some(sender_info.sender_name.to_owned());
-    let send_mailbox = Mailbox::new(name, source_address);
-    let reply_addr = sender_info.reply_addr.parse::<Address>()?;
-
-    let smtp_server = match &sender_info.provider {
-        SmtpServer::Gmail => "smtp.gmail.com",
-        SmtpServer::FastMail => "smtp.fastmail.com",
-        SmtpServer::Custom(s) => s.as_str(),
-    };
+    let creds = sender.get_credentials();
+    let send_mailbox = Mailbox::new(sender.get_name(), sender.get_address());
+    let reply_addr = sender.get_reply_address();
+    let smtp_server = sender.get_smtp_server();
 
     // Content type
     let content_type = match email_info.is_html {
@@ -182,20 +61,8 @@ pub fn send_email(
         false => ContentType::TEXT_PLAIN,
     };
 
-    // Attachements, if any
-    let filename = "pic.jpg".to_string();
-    let filebody = fs::read("./pic.jpg").unwrap();
-    let content_type_att = ContentType::TEXT_PLAIN;
-    let attachment = Attachment::new(filename).body(filebody, content_type_att);
-    // Create recipient mailboxes
-    let mut mail_boxes: Vec<Mailbox> = Vec::new();
-    for i in recipient {
-        let email_addr = i.email.parse::<Address>()?;
-        mail_boxes.push(Mailbox::new(i.name.clone(), email_addr));
-    }
-
     // add body and attachments
-    let mut multipart = lettre::message::MultiPart::mixed().singlepart(
+    let mut multipart = MultiPart::mixed().singlepart(
         lettre::message::SinglePart::builder()
             .header(content_type)
             .body(String::from(email_info.content.to_owned())),
@@ -204,17 +71,14 @@ pub fn send_email(
         multipart = multipart.singlepart(i.clone());
     }
 
-    // Create recipient mailboxes
-    let mut mail_boxes: Vec<Mailbox> = Vec::new();
-    for i in recipient {
-        let email_addr = i.email.parse::<Address>()?;
-        mail_boxes.push(Mailbox::new(i.name.clone(), email_addr));
-    }
-
     // configure to send to multiple recipients
     let mut email = Message::builder();
-    for i in mail_boxes {
-        email = email.to(i);
+    for i in recipient {
+        match i.category {
+            Category::To => email = email.to(Mailbox::new(i.get_name(), i.get_address())),
+            Category::Cc => email = email.cc(Mailbox::new(i.get_name(), i.get_address())),
+            Category::Bcc => email = email.bcc(Mailbox::new(i.get_name(), i.get_address())),
+        }
     }
 
     let email = email
