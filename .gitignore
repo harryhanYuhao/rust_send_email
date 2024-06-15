@@ -2,3 +2,4 @@
 .password.toml
 *jpg
 *txt
+src/main.rs
