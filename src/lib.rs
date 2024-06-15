@@ -22,7 +22,7 @@ pub use email::Email;
 ///let sender_info = SenderInfo::new(
 ///    "example@gmail.com",           // credential_username (email address)
 ///    "PASSWORD",              // password
-///    "Harry Han",             // sender_name
+///    "John Eric",             // sender_name
 ///    SmtpServer::Gmail,       // smtp provider
 ///);
 ///
@@ -34,7 +34,7 @@ pub use email::Email;
 ///);
 ///
 ///let recipients = vec![RecipientInfo::new(
-///    "Harry",                // name
+///    "John Staff",                // name
 ///    "y.han@joblist.org.uk", // email
 ///)];
 ///

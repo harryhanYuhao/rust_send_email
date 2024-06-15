@@ -21,7 +21,7 @@ impl Recipient {
     /// Create a new recipient.
     /// # Example
     /// ```
-    /// let recipient = Recipient::new("Harry", "example@gmail.com", Category::To);
+    /// let recipient = Recipient::new("Jack Francis", "example@gmail.com", Category::To);
     /// ```
     /// There are only three kinds of [`Category`]: `To`, `Cc`, and `Bcc`.
     /// You can provide empty name with ""

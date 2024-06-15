@@ -41,7 +41,7 @@ You can also stores the password in toml file like this and read from it securel
 let sender_info = SenderInfo::new_passwd_from_file(
     "example.com", // credential_username
     ".password.toml",        // file_path to password
-    "Harry Han",             // sender_name
+    "Francis Waverley",             // sender_name
     SmtpServer::Gmail,       // provider
 );
 ```
