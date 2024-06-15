@@ -9,7 +9,7 @@ homepage = "https://github.com/harryhanYuhao/rust_send_email"
 repository = "https://github.com/harryhanYuhao/rust_send_email"
 keywords = ["email", "utility"]
 readme = "README.md"
-exclude = ["example/*", ".gitignore", ".cargo_vsc_info.json"]
+exclude = ["example/*", ".gitignore", ".cargo_vcs_info.json"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
