@@ -1,18 +1,14 @@
 // cargo add lettre
 use lettre::address::Address;
 use lettre::message::header::ContentType;
-use lettre::message::{Attachment, Mailbox};
+use lettre::message::{Attachment, Mailbox, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
 
 use serde::Deserialize;
 use std::fs;
 
-#[derive(Deserialize)]
-struct Password {
-    password: String,
-}
-
+// smtp is send server
 pub enum SmtpServer {
     Gmail,
     FastMail,
@@ -23,6 +19,7 @@ pub struct EmailInfo {
     subject: String,
     content: String,
     is_html: bool,
+    attachments: Vec<SinglePart>,
 }
 
 pub struct RecipientInfo {
@@ -46,14 +43,67 @@ impl RecipientInfo {
     }
 }
 
+fn convert_path_to_attachment(path: &str) -> SinglePart {
+    let filename = path.to_string();
+    let filebody = fs::read(path).expect(&format!(
+        "Failed to Execute path_to_attachment:\nUnable to read file: {}",
+        path
+    ));
+    let content_type_att = ContentType::TEXT_PLAIN;
+    Attachment::new(filename).body(filebody, content_type_att)
+}
+
 impl EmailInfo {
     pub fn plain_messasge(subject: &str, content: &str) -> Self {
         Self {
             subject: subject.to_owned(),
             content: content.to_owned(),
             is_html: false,
+            attachments: Vec::new(),
         }
     }
+
+    pub fn new(subject: &str, content: &str, is_html: bool, attachments: Vec<&str>) -> Self {
+        let attachments = attachments
+            .iter()
+            .map(|x| convert_path_to_attachment(x))
+            .collect::<Vec<SinglePart>>();
+        Self {
+            subject: subject.to_owned(),
+            content: content.to_owned(),
+            is_html,
+            attachments,
+        }
+    }
+
+    pub fn new_body_from_file(
+        subject: &str,
+        file_path: &str,
+        is_html: bool,
+        attachments: Vec<&str>,
+    ) -> Self {
+        let attachments = attachments
+            .iter()
+            .map(|x| convert_path_to_attachment(x))
+            .collect::<Vec<SinglePart>>();
+
+        let content = fs::read_to_string(file_path).expect(&format!(
+            "Failed to Execute new_body_from_file:\nUnable to read file: {}",
+            file_path
+        ));
+
+        Self {
+            subject: subject.to_owned(),
+            content,
+            is_html,
+            attachments,
+        }
+    }
+}
+
+#[derive(Deserialize)]
+struct Password {
+    password: String,
 }
 
 pub struct SenderInfo {
@@ -133,15 +183,25 @@ pub fn send_email(
     };
 
     // Attachements, if any
-    let filename = "a.txt".to_string();
-    let filebody = fs::read("a.txt").unwrap();
-    let content_type = ContentType::TEXT_PLAIN;
-    let attachment = Attachment::new(filename).body(filebody, content_type.clone());
+    let filename = "pic.jpg".to_string();
+    let filebody = fs::read("./pic.jpg").unwrap();
+    let content_type_att = ContentType::TEXT_PLAIN;
+    let attachment = Attachment::new(filename).body(filebody, content_type_att);
     // Create recipient mailboxes
     let mut mail_boxes: Vec<Mailbox> = Vec::new();
     for i in recipient {
         let email_addr = i.email.parse::<Address>()?;
         mail_boxes.push(Mailbox::new(i.name.clone(), email_addr));
+    }
+
+    // add body and attachments
+    let mut multipart = lettre::message::MultiPart::mixed().singlepart(
+        lettre::message::SinglePart::builder()
+            .header(content_type)
+            .body(String::from(email_info.content.to_owned())),
+    );
+    for i in email_info.attachments.iter() {
+        multipart = multipart.singlepart(i.clone());
     }
 
     // Create recipient mailboxes
@@ -156,13 +216,12 @@ pub fn send_email(
     for i in mail_boxes {
         email = email.to(i);
     }
-    // add the rest of info
+
     let email = email
         .from(send_mailbox)
         .reply_to(reply_addr.into())
         .subject(email_info.subject.to_owned())
-        .header(content_type)
-        .body(String::from(email_info.content.to_owned()))
+        .multipart(multipart)
         .unwrap();
 
     // Open a secure connection to the SMTP server using STARTTLS
