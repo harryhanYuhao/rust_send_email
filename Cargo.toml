@@ -1,3 +1,4 @@
+workspace = { members = [ "testing"] }
 [package]
 name = "send_email"
 version = "0.3.0"

@@ -2,4 +2,5 @@
 .password.toml
 *jpg
 *txt
+testing/
 src/main.rs
