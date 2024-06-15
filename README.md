@@ -27,7 +27,7 @@ fn main() {
     let recipients = vec![RecipientInfo::new(
         "Harry",                // name
         "y.han@joblist.org.uk", // email
-        Category::To,           // category
+        Category::To,           // category can be To, Cc, Bcc
     )];
 
     send_email(&sender_info, &message, &recipients).unwrap();
