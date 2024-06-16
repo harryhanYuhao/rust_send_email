@@ -1,7 +1,7 @@
 use lettre::address::Address;
 
-/// This enum represents the category of the recipient.
-/// It can be either `To`, `Cc`, or `Bcc`.
+/// This enum represents if the recipient is direct recipient, carbon copy, or blind carbon copy.
+/// The values are Category::To, Category::Cc, and Category::Bcc.
 #[allow(missing_docs)]
 pub enum Category {
     To,
@@ -9,7 +9,7 @@ pub enum Category {
     Bcc,
 }
 
-/// Represents the recipients
+/// The object represents the recipients and used in send_email function.
 #[allow(missing_docs)]
 pub struct Recipient {
     pub name: String,  // if no name, leave it empty

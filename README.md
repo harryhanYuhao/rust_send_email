@@ -12,7 +12,7 @@ use send_email::*;
 fn main() {
     let sender = Sender::new(
         "example@gmail.com", // credential_username
-        ".password.toml",    // file_path to password
+        "PASSWORD",    // password
         "Eric Elon",         // sender name. Leave empty if not needed
         SmtpServer::Gmail,   // provider
         "example@gmail.com", // reply_addr
@@ -47,9 +47,9 @@ Password can be stored in toml file and the program can read from it securely:
 ```rust
 // main.rs
 let sender = Sender::new_passwd_from_file(
-    "example.com", // credential_username
+    "example.com",           // credential_username
     ".password.toml",        // file_path to password
-    "Francis Waverley",             // sender_name
+    "Francis Waverley",      // sender_name
     SmtpServer::Gmail,       // provider
 );
 ```

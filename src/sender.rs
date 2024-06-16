@@ -1,12 +1,17 @@
-#![allow(missing_docs)]
 use lettre::address::Address;
 use lettre::transport::smtp::authentication::Credentials;
 
 use serde::Deserialize;
 use std::fs;
 
-/// Represents the SMTP server.
+/// This enum represents the category of the recipient.
 /// SMTP server is the server that sends the email
+/// You can use custom SMTP server by using the Custom variant.
+/// The predefined SMTP servers are 
+/// Gmail: smtp.gmail.com 
+/// FastMail: smtp.fastmail.com 
+/// Outlook: smtp-mail.outlook.com 
+/// Yahoo: smtp.mail.yahoo.com 
 #[allow(missing_docs)]
 pub enum SmtpServer {
     Gmail,
@@ -76,6 +81,7 @@ impl Sender {
         self.reply_addr.clone()
     }
 
+    /// Create a sender object by providing the password directly.
     pub fn new(
         credential_username: &str,
         credential_password: &str,
@@ -97,6 +103,8 @@ impl Sender {
         }
     }
 
+    /// Create a sender object by reading the password from a file
+    /// The file should be in toml format and should contain the password field.
     pub fn new_passwd_from_file(
         credential_username: &str,
         file_path: &str,

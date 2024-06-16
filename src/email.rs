@@ -4,12 +4,14 @@ use std::fs;
 
 /// Represents the email content.
 /// You should create an email object by using its constructors.
-#[allow(missing_docs)]
 pub struct EmailContent {
+    /// subject of email 
     pub subject: String,
+    /// content of email represented in plain text
     pub content: String,
+    /// is_html shall be true if the content is in HTML format
     pub is_html: bool,
-    pub attachments: Vec<SinglePart>,
+    pub(crate) attachments: Vec<SinglePart>,
 }
 
 fn convert_path_to_attachment(path: &str) -> SinglePart {
@@ -33,10 +35,11 @@ impl EmailContent {
         }
     }
 
-    /// Create a complete email.
-    /// If no attachment is needed, leave the attachment vector empty.
-    pub fn new(subject: &str, content: &str, is_html: bool, attachment_paths: Vec<&str>) -> Self {
-        let attachments = attachment_paths
+    /// Create a complete email object for use in send_email function 
+    /// path_to_attachments is a Vec<&str>, holding relative paths to the attachments.
+    /// If no attachment leave the vec empty.
+    pub fn new(subject: &str, content: &str, is_html: bool, path_to_attachments: Vec<&str>) -> Self {
+        let attachments = path_to_attachments
             .iter()
             .map(|x| convert_path_to_attachment(x))
             .collect::<Vec<SinglePart>>();
@@ -48,7 +51,8 @@ impl EmailContent {
         }
     }
 
-    /// Create a complete email from a file.
+    /// Create an email object for use in send_email function
+    /// The body of the email is read from a file. 
     pub fn new_email_body_from_file(
         subject: &str,
         body_file_path: &str,
