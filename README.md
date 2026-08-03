@@ -60,7 +60,7 @@ let sender = Sender::new_passwd_from_file(
 # .password.toml
 password = "PASSWORD"
 ```
-Sending an email is easy as this.
+Sending an email is easy as this. 
 
 ## Authentication  
 
@@ -71,3 +71,8 @@ Most modern email providers use Multi-Factor authentications, which our program 
 A google app password is needed required for sending gmails.
 Google app password is a 16-letter automatically generated password that is different from the password you created for your google account. 
 Get your google app password [here](https://myaccount.google.com/apppasswords), and use it for authentication.
+
+## Junk
+
+The emails sent by this program have a high chance to be classified as junk by many email clients. 
+To minimize this chance, fill in all the information as detailed as possible, and use paragraph styled message body.
