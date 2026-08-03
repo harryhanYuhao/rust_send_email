@@ -7,14 +7,15 @@ fn main() {
         ".password.toml",    // file_path to password
         "Eric Elon",         // sender_name
         SmtpServer::Gmail,   // provider
-        "example@gmail.com", // reply_addr
+        "example@gmail.com", // reply_addr. Leave empty if not needed
     );
 
     let message = EmailContent::new(
         "Hi",                           // subject
         "Hello, this is a test email.", // body
         false,                          // is_html
-        vec!["pic.jpg", "Cargo.toml"],  // path to attachments
+        vec!["pic.jpg", "Cargo.toml"],  // path to attachments. Leave empty if
+                                        // there is no attachements
     );
 
     let recipients = vec![
